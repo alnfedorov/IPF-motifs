@@ -4,15 +4,15 @@ This repository contains the code and data to reproduce the motif analysis prese
 
 ```
 IPF-motifs/
-├── GRCh38/                # GRCh38 reference genome files and processed annotations (populated by setup)
-├── pixi.lock              # Pixi lock file for reproducible environments
-├── pixi.toml              # Pixi project configuration, dependencies, and tasks
-├── setup/                 # Scripts for initial data download and setup
-├── utils/                 # Utility scripts and modules (e.g., for FASTA, BED, motif operations)
-└── stories/               # Main analysis workflows
-    ├── cCRE/              # ENCODE cCRE processing and matching to transcripts
-    ├── motifs/            # Motif database parsing, promoter scoring, and per-gene response calculation
-    └── IPF/               # IPF scRNA-seq data integration and significance testing
+├── GRCh38/     # GRCh38 reference genome files and processed annotations (populated by setup)
+├── pixi.lock   # Pixi lock file for reproducible environments
+├── pixi.toml   # Pixi project configuration, dependencies, and tasks
+├── setup/      # Scripts for initial data download and setup
+├── utils/      # Utility scripts and modules (e.g., for FASTA, BED, motif operations)
+└── stories/    # Main analysis workflows
+    ├── cCRE/   # ENCODE cCRE processing and matching to transcripts
+    ├── motifs/ # Motif database parsing, promoter scoring, and per-gene response calculation
+    └── IPF/    # IPF scRNA-seq data integration and significance testing
 ```
 
 ## Installation & Setup
@@ -21,16 +21,16 @@ IPF-motifs/
    from [pixi.sh](https://pixi.sh/).
 2. **Clone the Repository:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/alnfedorov/IPF-motifs
    cd IPF-motifs
    ```
 3. **Download and Prepare Genomic Data:**
    ```bash
    pixi run setup
    ```
-   This task downloads the GRCh38 reference genome and GENCODE annotations, then processes them. The ENCODE cCRE BED
-   file (`GRCh38/GRCh38-cCREs.bed.gz`), JASPAR motif files, motif cluster definitions, and scRNA-seq DEG tables are
-   pre-committed to this repository within the relevant `GRCh38/` or `stories/*/ld/resources/` directories.
+   This task downloads the GRCh38 reference genome and GENCODE annotations, then processes them. ENCODE cCREs, JASPAR
+   motifs, and scRNA-seq tables are pre-committed to this repository within the relevant `GRCh38/` or
+   `stories/*/ld/resources/` directories.
 
 **Note:** This repository is designed to be used on Linux x86_64 systems and is not compatible with other architectures
 or operating systems.
