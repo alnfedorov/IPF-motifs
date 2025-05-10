@@ -1,0 +1,58 @@
+[project]
+channels = ["conda-forge", "bioconda"]
+name = "IPF-motifs"
+platforms = ["linux-64"]
+
+[environments]
+default = ["python"]
+
+[feature.python.dependencies]
+python = "==3.13.3"
+pixi-pycharm = "*"
+tabix = ">=1.11,<2"
+samtools = "==1.21"
+
+[feature.python.pypi-dependencies]
+biobit = "==0.0.8"
+pandas = ">=2.2.3, <3"
+intervaltree = ">=3.1.0, <4"
+joblib = ">=1.5.0, <2"
+scipy = ">=1.15.3, <2"
+matplotlib = ">=3.10.1, <4"
+seaborn = ">=0.13.2, <0.14"
+
+[feature.python.activation]
+env = { PYTHONPATH = "$PIXI_PROJECT_ROOT" }
+
+[feature.python.tasks.setup]
+cmd = [
+    "bash", "download-annotation.sh", "$VERSION", "$SAVETO", "&&",
+    "python", "index-gencode-gff.py"
+]
+env = { VERSION = "46", SAVETO = "$PIXI_PROJECT_ROOT/GRCh38" }
+cwd = "setup"
+
+[feature.python.tasks."stories/cCRE"]
+cmd = [
+    "python", "match-to-transcripts.py", "&&",
+    "python", "derive-sequences.py"
+]
+cwd = "stories/cCRE"
+
+[feature.python.tasks."stories/motifs"]
+cmd = [
+    "python", "parse-jaspar-clusters.py", "&&",
+    "python", "score-promoters.py", "&&",
+    "python", "calculate-per-motif-response.py", "&&",
+    "python", "calculate-per-cluster-response.py"
+]
+cwd = "stories/motifs"
+
+[feature.python.tasks."stories/IPF"]
+cmd = [
+    "python", "parse-scRNA-seq.py", "&&",
+    "python", "calculate-significance.py", "&&",
+    "python", "plot-responses.py", "&&",
+    "python", "plot-swarm-summary.py"
+]
+cwd = "stories/IPF"
