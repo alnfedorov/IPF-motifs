@@ -7,10 +7,11 @@ import ld
 from stories.motifs import ld as motifs
 
 plt.rcParams['svg.fonttype'] = 'none'
+SAVETO = ld.RESULTS / "responses"
+SAVETO.mkdir(parents=True, exist_ok=True)
 
-# Define the target motifs and populations
+# Define target motifs
 MOTIFS = ['ISRE-like', 'GAS-like']
-POPULATIONS = ["CXCL10+ AM", "IGF1AM"]
 
 # Load the motif scores
 motifs = pd.read_pickle(motifs.scoring.response_per_cluster)
@@ -34,8 +35,7 @@ df = pd.concat(df)
 
 # Make all plots
 genes = {gene.ind.split('.')[0]: gene for gene in GRCh38.gencode.load().genes.values()}
-for population in POPULATIONS:
-    data = df[(df['Tissue'] == 'lung') & (df['Subset'] == population)].copy()
+for (tissue, subset), data in df.groupby(['Tissue', 'Subset']):
     for motif in MOTIFS:
         scale = 1.25
         fig, ax = plt.subplots(figsize=(6.4 * 1.25, 4.8 * 1.25))
@@ -51,7 +51,7 @@ for population in POPULATIONS:
         sns.despine(fig=fig, ax=ax)
 
         N = len(data)
-        ax.set_title(f"{population} [N={N}]")
+        ax.set_title(f"{tissue}: {subset} [N={N}]")
 
         ax.axvline(0, color='black', lw=2)
         ax.axhline(ld.thresholds.zscore, color='black', lw=2)
@@ -76,10 +76,10 @@ for population in POPULATIONS:
         ]:
             for gid, row in data[masking].iterrows():
                 gname = genes[gid].attrs.name
-                ax.text(row['log2FoldChange'], row[motif], gname, fontsize=8, ha='center', va='center')
+                ax.text(row['log2FoldChange'], row[motif], gname, fontsize=6, ha='center', va='center')
 
         fig.savefig(
-            ld.RESULTS / f"{motif}-{population}-response.svg", dpi=300, bbox_inches="tight",
+            SAVETO / f"{tissue}-{subset}-{motif}-response.svg", dpi=300, bbox_inches="tight",
             pad_inches=0, transparent=True
         )
         fig.show()

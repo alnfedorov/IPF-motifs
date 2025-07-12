@@ -12,10 +12,6 @@ PALETTE = {
     'Not significant': '#93a2cb',
     'Significant': '#da6434'
 }
-ORDER = [
-    'CXCL10+ AM', 'SPP1+ AM', 'Cycling AM 1', 'Cycling AM 2', 'IGF1AM', 'FABP4AM', 'CD9+_FN1_CD206hiAMs',
-    'Effector CD4+ T cells', 'Naive CD4+ T cells',
-]
 
 X = '-log10(p-value)'
 
@@ -42,7 +38,8 @@ for tissue, subdf in df.groupby('tissue'):
         total_genes[subset] = total.max()
     subdf['subset'] = subdf['subset'].apply(lambda x: f"{x}\n[Genes={total_genes[x]}]")
 
-    order = [f"{subset}\n[Genes={total_genes[subset]}]" for subset in ORDER]
+    # order = [f"{subset}\n[Genes={total_genes[subset]}]" for subset in ORDER]
+    order = sorted(subdf['subset'].unique())
     assert set(order) == set(subdf['subset']), set(subdf['subset']) - set(order)
 
     subdf['Y'] = subdf['subset'].map({subset: i for i, subset in enumerate(order)})
@@ -52,7 +49,8 @@ for tissue, subdf in df.groupby('tissue'):
     # subdf['Size'] = subdf['Have motif'] / (subdf['Have motif'] + subdf['No motif'])
     # subdf['Size'] = (subdf['Size'] / subdf['Size'].max() * 5).clip(2, 5)
 
-    fig, ax = plt.subplots(figsize=(14.8, 12.4 / 2))
+    height = 0.5 * len(order) + 0.5
+    fig, ax = plt.subplots(figsize=(14.8, height))
     sns.scatterplot(
         data=subdf, y='Y', x=X, ax=ax, hue='Category', s=50, edgecolor='white', linewidth=0.75, palette=PALETTE,
     )
@@ -72,19 +70,26 @@ for tissue, subdf in df.groupby('tissue'):
                 continue
             x = x[X].values[0]
             if x > 0:
-                ax.text(x, y, motif, ha='left', va='center', color='gray')
+                ax.text(x, y, motif, ha='left', va='center', color='red')
 
         signif = subdf[(subdf['subset'] == subset) & (subdf['Category'] != 'Not significant')]
         for motif, corr, signif in signif[['motif', X, 'Category']].itertuples(index=False):
-            color = 'black'
-            ax.text(corr, y, motif, ha='left', va='center', color='black', fontweight='bold', zorder=1000)
+            fontsize = 6 if motif.startswith("cluster") else 12
+            ax.text(
+                corr, y, motif, ha='left', va='center', color='black', fontweight='bold', fontsize=fontsize
+            )
 
     # FDR line
     minpval = subdf[subdf['Category'] != 'Not significant'][X].min()
     ax.axvline(minpval, color='black', linestyle='--', linewidth=1)
-    ax.text(minpval, -0.6, f'FDR ≤ {ld.thresholds.qvalue}', ha='left', va='bottom', color='black')
+    ax.text(
+        minpval, 0, f'FDR ≤ {ld.thresholds.qvalue}', ha='left', va='bottom', color='black',
+        transform=ax.get_xaxis_transform(), fontsize=10, fontweight='bold'
+    )
 
     fig.show()
     ld.RESULTS.mkdir(parents=True, exist_ok=True)
-    fig.savefig(ld.RESULTS / "swarm-summary.svg", dpi=450, bbox_inches="tight", pad_inches=0, transparent=True)
+    fig.savefig(
+        ld.RESULTS / f"swarm-summary-{tissue}.svg", dpi=450, bbox_inches="tight", pad_inches=0, transparent=True
+    )
     plt.close(fig)
