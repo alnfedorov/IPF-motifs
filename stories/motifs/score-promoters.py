@@ -1,5 +1,3 @@
-import pickle
-
 import pandas as pd
 from biobit import io
 from joblib import Parallel, delayed
@@ -10,15 +8,18 @@ from stories.cCRE import ld as cCRE
 from utils import motifs, fasta
 
 
-def screeen(seqid: str, start: int, end: int, allmotifs: motifs.ZeroOrderMotifsCollection):
+def screen(seqid: str, start: int, end: int, allmotifs: motifs.ZeroOrderMotifsCollection):
     reader = io.fasta.IndexedReader(GRCh38.fasta)
     forward = fasta.fetch(reader, seqid, (start, end), strand='+')
     revcomp = fasta.fetch(reader, seqid, (start, end), strand='-')
 
-    # Get scores for all motifs
+    # Calculate motif response score for each promoter as a maximum of its forward and reverse complement scores
     scores = motifs.score(forward.upper(), revcomp.upper(), allmotifs)
-    scores = {(motif.ind, motif.target): score for motif, score in zip(allmotifs.motifs, scores)}
-    return (seqid, start, end), scores
+
+    record = {"seqid": seqid, "roi-norm-start": start, "roi-norm-end": end}
+    for motif, score in zip(allmotifs.motifs, scores):
+        record[motif.ind, motif.target] = score
+    return record
 
 
 # Load all motifs and calculate PWMs
@@ -33,19 +34,14 @@ sequences = pd.read_pickle(cCRE.sequences.saveto)
 sequences = sequences[sequences['roi-type'] == 'PLS']
 regions = sequences[['seqid', 'roi-norm-start', 'roi-norm-end']].drop_duplicates()
 
-for seqid, group in regions.groupby('seqid'):
-    print(f"Processing {len(group)} regions on {seqid}")
+# Calculate per-motif scores for each promoter
+print(f"Calculating per-motif scores for {len(regions)} promoters...")
+records = Parallel(n_jobs=-1, verbose=100, pre_dispatch='all', batch_size=1024)(
+    delayed(screen)(seqid, start, end, database)
+    for seqid, start, end in regions.itertuples(index=False, name=None)
+)
+df = pd.DataFrame(records)
 
-    result = Parallel(n_jobs=-1, verbose=100, pre_dispatch='all', batch_size=128)(
-        delayed(screeen)(seqid, start, end, database)
-        for seqid, start, end in group.itertuples(index=False, name=None)
-    )
-    repacked = dict(result)
-
-    print(f"Saving {len(repacked)} regions on {seqid}")
-    saveto = ld.scoring.raw_signal / f"{seqid}.pkl"
-    saveto.parent.mkdir(parents=True, exist_ok=True)
-    with open(saveto, 'wb') as f:
-        pickle.dump(repacked, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-    del result, repacked
+# Save the results
+ld.scoring.raw_signal.parent.mkdir(parents=True, exist_ok=True)
+df.to_pickle(ld.scoring.raw_signal, protocol=-1)
