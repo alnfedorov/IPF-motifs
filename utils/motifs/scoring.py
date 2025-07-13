@@ -38,7 +38,7 @@ def _OHE_DNA() -> npt.NDArray[np.float32]:
 
 def score[T: ZeroOrderMotif](
         forward: str, revcomp: str, motifs: ZeroOrderMotifsCollection[T]
-) -> list[tuple[npt.NDArray[np.float32], npt.NDArray[np.float32]]]:
+) -> list[float]:
     # Check that each motif has the same alphabet size
     sizes = set(motif.nletters() for motif in motifs.motifs)
     if len(sizes) != 1 or sizes != {len(motifs.alphabet)}:
@@ -75,6 +75,6 @@ def score[T: ZeroOrderMotif](
             for enc, rpwm in zip(encoded, revpwm):
                 response += np.convolve(enc, rpwm, mode="valid")
         results.append(
-            (fwdbuffer[:size].copy(), revbuffer[:size].copy())
+            float(max(fwdbuffer[:size].max(), revbuffer[:size].max()))
         )
     return results
