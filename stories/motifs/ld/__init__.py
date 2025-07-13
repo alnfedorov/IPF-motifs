@@ -15,5 +15,4 @@ class jaspar:
 
 class scoring:
     raw_signal = RESULTS / "signal.pkl"
-    response_per_cluster = RESULTS / "clusters.pkl"
-    response_per_motif = RESULTS / "motifs.pkl"
+    response = RESULTS / "clusters.pkl"
