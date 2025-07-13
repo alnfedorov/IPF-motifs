@@ -17,8 +17,8 @@ transcripts_index = defaultdict(IntervalTree)
 all_transcripts = []
 
 for rna in ANNOTATION.rnas.values():
-    is_well_defined = len(rna.attrs.tags & {'Ensembl canonical', 'MANE Select', 'MANE Plus Clinical'}) > 0
-    is_well_defined |= rna.attrs.TSL == 1
+    is_well_defined = len(rna.attrs.tags & {'MANE Select', 'MANE Plus Clinical'}) > 0
+    is_well_defined |= rna.attrs.TSL == 1 or rna.attrs.TSL == 2
     if not is_well_defined:
         continue
 

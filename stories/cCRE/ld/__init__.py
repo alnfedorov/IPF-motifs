@@ -13,7 +13,7 @@ class cCRE:
     DNase_H3K4me3 = saveto / "DNase-H3K4me3.bed.gz"
 
     class overlaps:
-        max_distances = {"PLS": 200, "pELS": 2_000, "DNase-H3K4me3": 0}
+        max_distances = {"PLS": 500, "pELS": 2_000, "DNase-H3K4me3": 0}
         saveto = RESULTS / "cCRE"
         pkl = saveto / "overlaps.pkl"
         bed = saveto / "overlaps.bed.gz"
