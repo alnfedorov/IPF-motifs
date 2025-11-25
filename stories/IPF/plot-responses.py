@@ -36,10 +36,16 @@ genes = {gene.ind.split('.')[0]: gene for gene in GRCh38.gencode.load().genes.va
 for (tissue, subset), data in df.groupby(['Tissue', 'Subset']):
     for motif in MOTIFS:
         scale = 1.25
-        fig, ax = plt.subplots(figsize=(6.4 * 1.25, 4.8 * 1.25))
+        fig, (ax_kde, ax) = plt.subplots(
+            2, 1,
+            sharex=True,
+            figsize=(6.4 * scale, 6.4 * scale),
+            gridspec_kw={'height_ratios': [1, 4], 'hspace': 0.1},
+        )
 
         data['Has motif'] = data[motif] >= ld.thresholds.zscore
 
+        # Scatter plot
         alpha = data['Has motif'].apply(lambda x: 1 if x else 0.35)
         color = data['Has motif'].apply(lambda x: 'blue' if x else 'red')
         sns.scatterplot(
@@ -48,37 +54,45 @@ for (tissue, subset), data in df.groupby(['Tissue', 'Subset']):
         )
         sns.despine(fig=fig, ax=ax)
 
+        # KDE plot
+        sns.kdeplot(
+            data=data, x='log2FoldChange', hue='Has motif', fill=True, common_norm=False,
+            alpha=0.35, ax=ax_kde, legend=False, palette={False: 'blue', True: 'red'}
+        )
+        sns.despine(fig=fig, ax=ax_kde)
+
+        # Add titles and limits
         N = len(data)
-        ax.set_title(f"{tissue}: {subset} [N={N}]")
+        ax_kde.set_title(f"{tissue}: {subset} [N={N}]")
 
         ax.axvline(0, color='black', lw=2)
         ax.axhline(ld.thresholds.zscore, color='black', lw=2)
         ax.set(xlim=(-5, 5), ylim=(-4, 4))
 
-        # Label number of genes in each quadrant
-        for masking, x, y in [
-            (lambda x: (x['log2FoldChange'] < 0) & (x[motif] < ld.thresholds.zscore), 0, 0),
-            (lambda x: (x['log2FoldChange'] < 0) & (x[motif] > ld.thresholds.zscore), 0, 1),
-            (lambda x: (x['log2FoldChange'] > 0) & (x[motif] < ld.thresholds.zscore), 1, 0),
-            (lambda x: (x['log2FoldChange'] > 0) & (x[motif] > ld.thresholds.zscore), 1, 1),
-        ]:
-            N = masking(data).sum()
-            ha = 'left' if x == 0 else 'right'
-            va = 'bottom' if y == 0 else 'top'
-            ax.text(x, y, f"N={N} ({N / len(data):.1%})", transform=ax.transAxes, fontsize=12, ha=ha, va=va)
+        # Annotate medians on the KDE plot
+        for has_motif, group in data.groupby('Has motif'):
+            color, ha = ('red', 'left') if has_motif else ('blue', 'right')
+            fc = group['log2FoldChange'].median()
+            ax_kde.text(
+                fc, ax_kde.get_ylim()[1], f"{fc:.2f}", color=color, ha=ha, va='top', fontsize=8
+            )
 
         # Label the genes in upper left and right quadrants
         for masking, x, y in [
             (lambda x: (x['log2FoldChange'] < 0) & (x[motif] > ld.thresholds.zscore), 0, 1),
             (lambda x: (x['log2FoldChange'] > 0) & (x[motif] > ld.thresholds.zscore), 1, 1),
         ]:
-            for gid, row in data[masking].iterrows():
+            mask = masking(data)
+            selected = data[mask].copy()
+            selected['rank'] = selected[motif].rank(ascending=False) + \
+                               selected['log2FoldChange'].abs().rank(ascending=False)
+            for gid, row in selected.nsmallest(50, 'rank').iterrows():
                 gname = genes[gid].attrs.name
                 ax.text(row['log2FoldChange'], row[motif], gname, fontsize=6, ha='center', va='center')
 
-        # fig.savefig(
-        #     SAVETO / f"{tissue}-{subset}-{motif}-response.svg", dpi=300, bbox_inches="tight",
-        #     pad_inches=0, transparent=True
-        # )
+        fig.savefig(
+            SAVETO / f"{tissue}-{subset}-{motif}-response.svg", dpi=300, bbox_inches="tight",
+            pad_inches=0, transparent=True
+        )
         fig.show()
         plt.close(fig)
