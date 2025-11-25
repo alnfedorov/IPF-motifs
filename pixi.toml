@@ -43,8 +43,7 @@ cwd = "stories/cCRE"
 cmd = [
     "python", "parse-jaspar-clusters.py", "&&",
     "python", "score-promoters.py", "&&",
-    "python", "calculate-per-motif-response.py", "&&",
-    "python", "calculate-per-cluster-response.py"
+    "python", "calculate-responses.py"
 ]
 cwd = "stories/motifs"
 

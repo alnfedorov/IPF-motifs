@@ -13,10 +13,8 @@ SAVETO.mkdir(parents=True, exist_ok=True)
 # Define target motifs
 MOTIFS = ['ISRE-like', 'GAS-like']
 
-# Load the motif scores
-motifs = pd.read_pickle(motifs.scoring.response_per_cluster)
-assert (motifs['roi-type'] == 'PLS').all(), motifs['motif'].unique_values()
-motifs = motifs.drop(columns=['roi-type']).set_index('Gene ID').copy()
+# Load the motif scores for each gene
+motifs = pd.read_pickle(motifs.scoring.response)
 
 # Load the genes of interest
 genes = pd.read_pickle(ld.SCRNA_FOLD_CHANGE)
@@ -78,9 +76,9 @@ for (tissue, subset), data in df.groupby(['Tissue', 'Subset']):
                 gname = genes[gid].attrs.name
                 ax.text(row['log2FoldChange'], row[motif], gname, fontsize=6, ha='center', va='center')
 
-        fig.savefig(
-            SAVETO / f"{tissue}-{subset}-{motif}-response.svg", dpi=300, bbox_inches="tight",
-            pad_inches=0, transparent=True
-        )
+        # fig.savefig(
+        #     SAVETO / f"{tissue}-{subset}-{motif}-response.svg", dpi=300, bbox_inches="tight",
+        #     pad_inches=0, transparent=True
+        # )
         fig.show()
         plt.close(fig)

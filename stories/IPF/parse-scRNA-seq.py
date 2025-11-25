@@ -12,9 +12,8 @@ for tissue, data in ld.resources.subtypes.items():
         significant = set(df[df['padj'] <= 0.1].index)
 
         # Select only genes where estimated fold change is 'reliable'
-        df = df[['log2FoldChange', 'lfcSE', 'baseMean']].dropna(how='any')
-        df['metric'] = df['log2FoldChange'].abs() / df['lfcSE']
-        df = df[df['metric'] >= 1].copy()
+        df = df[['log2FoldChange', 'lfcSE', 'padj', 'baseMean']].dropna(how='any')
+        df = df[(df['baseMean'] >= 1) | (df['padj'] <= 0.25)].copy()
 
         # Sanity check
         assert set(df.index) & significant == significant
