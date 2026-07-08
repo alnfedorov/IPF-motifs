@@ -1,4 +1,4 @@
-This repository contains the code and data to reproduce the motif analysis presented in the paper "....".
+This repository contains the code and data to reproduce the motif analysis presented in the paper "Type I interferon–activated myeloid states are associated with less fibrotic stages in idiopathic pulmonary fibrosis".
 
 ## Repository Structure
 
@@ -32,8 +32,7 @@ IPF-motifs/
    motifs, and scRNA-seq tables are pre-committed to this repository within the relevant `GRCh38/` or
    `stories/*/ld/resources/` directories.
 
-**Note:** This repository is designed to be used on Linux x86_64 systems and is not compatible with other architectures
-or operating systems.
+**Note:** This repository is designed to be used on Linux x86_64 systems and is not compatible with other architectures or operating systems.
 
 ## Workflow
 
